@@ -4,10 +4,18 @@ namespace Video_conference_app.Controllers
 {
     public class ChatController : Controller
     {
+
+        public IActionResult Index()
+        {
+            return View("JoinView");
+        }
+
         public IActionResult HostChat()
         {
             string roomId = Guid.NewGuid().ToString();
-            return RedirectToAction("JoinChat", "Chat", new { roomId });
+            var joinChatLink = Url.Action("JoinChat", "Chat", new { roomId }, Request.Scheme);
+            ViewBag.JoinChatLink = joinChatLink;
+            return View("CreateView");
         }
 
         public IActionResult JoinChat(string roomId)
@@ -17,10 +25,7 @@ namespace Video_conference_app.Controllers
                 return BadRequest("Invalid room ID");
             }
 
-            var joinChatLink = Url.Action("JoinChat", "Chat", new { roomId }, Request.Scheme);
-
             ViewBag.RoomId = roomId;
-            ViewBag.JoinChatLink = joinChatLink;
 
             return View("HostView");
         }

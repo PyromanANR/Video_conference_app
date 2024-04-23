@@ -15,13 +15,13 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-6">
-            <button type="button" class="btn btn-primary btn-block mb-3">
+                <a asp-controller="Chat" asp-action="HostChat" type="button" class="btn btn-primary btn-block mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 20 20">
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                   <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                 </svg>
                 Create Meeting
-            </button>
+            </a>
         </div>
         <div class="col-md-6">
             <button type="button" class="btn btn-primary btn-block mb-3">
@@ -54,12 +54,12 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            <button type="button" class="btn btn btn-success btn-block" color="orange">
+             <a asp-controller="Chat" asp-action="Index" type="button" class="btn btn btn-success btn-block" color="orange">
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-telephone-fill" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>
                 </svg>
                 Join Meeting
-            </button>
+            </a>
         </div>
     </div>
 </div>
