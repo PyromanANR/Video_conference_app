@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Video_conference_app.Data;
 using System.IO;
 using Video_conference_app.Hubs;
+using Video_conference_app.Data;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<Video_conference_appContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Video_conference_appContext") ?? throw new InvalidOperationException("Connection string 'Video_conference_appContext' not found.")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("Video_conference_appContext") ?? throw new InvalidOperationException("Connection string 'Video_conference_appContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

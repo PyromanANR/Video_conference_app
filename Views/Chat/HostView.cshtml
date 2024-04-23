@@ -17,7 +17,7 @@
     <div>
         <button id="shareVideoButton">Share Video</button>
         <button id="toggleMicrophoneButton">Toggle Microphone</button>
-        <span id="microphoneIndicator" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: gray;"></span>
+        <span id="microphoneIndicator" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: rgb(128,128,128);"></span>
     </div>
     <div id="videoContainer"></div>
     <ul id="messagesList"></ul>
@@ -34,15 +34,12 @@
 
         connection.start()
             .then(() => {
-                // Join the room when the connection starts
                 connection.invoke("JoinRoom", roomId);
 
             })
             .catch(err => console.error(err.toString()));
 
-        // Add an event listener for the window's 'beforeunload' event
         window.addEventListener('beforeunload', () => {
-            // Leave the room when the window is closed or reloaded
             connection.invoke("LeaveRoom", roomId);
         });
 
