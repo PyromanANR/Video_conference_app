@@ -1,0 +1,36 @@
+﻿<!-- JoinChatView.cshtml -->
+<div class="container">
+    <h1>Join Chat</h1>
+    <div>
+        <label>Enter your name:</label>
+        <input type="text" id="userInput" />
+    </div>
+    <ul id="messagesList"></ul>
+    <input type="text" id="messageInput" />
+    <button id="sendButton">Send</button>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+        const hostId = "@ViewBag.HostId";
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        connection.on("ReceiveMessage", (user, message) => {
+            const messageElement = document.createElement("li");
+            messageElement.textContent = `${user}: ${message}`;
+            document.getElementById("messagesList").appendChild(messageElement);
+        });
+
+        document.getElementById("sendButton").addEventListener("click", () => {
+            const message = document.getElementById("messageInput").value;
+            const user = document.getElementById("userInput").value;
+            connection.invoke("SendMessage", user, message);
+            document.getElementById("messageInput").value = "";
+        });
+
+        connection.start().catch(err => console.error(err.toString()));
+    </script>
+}
