@@ -1,25 +1,50 @@
 ﻿<!-- HostView.cshtml -->
 <div class="container">
-    <h1>Host Chat</h1>
+    <h1>VideoChat</h1>
     <div>
         <label>Share this link with others to join the chat:</label>
-        <input type="text" readonly value="@(ViewBag.RequestScheme + "://" + Context.Request.Host + Url.Action("JoinChat", "Chat", new { hostId = ViewBag.HostId }))" />
+        <input type="text" readonly value="@ViewBag.JoinChatLink" />
+    </div>
+    <div>
+        <label>Enter your name:</label>
+        <input type="text" id="userInput" />
     </div>
     <div>
         <label>Enter a message:</label>
         <input type="text" id="messageInput" />
         <button id="sendButton">Send</button>
     </div>
+    <div>
+        <button id="shareVideoButton">Share Video</button>
+        <button id="toggleMicrophoneButton">Toggle Microphone</button>
+        <span id="microphoneIndicator" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: gray;"></span>
+    </div>
+    <div id="videoContainer"></div>
     <ul id="messagesList"></ul>
 </div>
 
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script>
-        const hostId = "@ViewBag.HostId";
+        const roomId = "@ViewBag.RoomId";
+        let videoStreams = [];
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .build();
+
+        connection.start()
+            .then(() => {
+                // Join the room when the connection starts
+                connection.invoke("JoinRoom", roomId);
+
+            })
+            .catch(err => console.error(err.toString()));
+
+        // Add an event listener for the window's 'beforeunload' event
+        window.addEventListener('beforeunload', () => {
+            // Leave the room when the window is closed or reloaded
+            connection.invoke("LeaveRoom", roomId);
+        });
 
         connection.on("ReceiveMessage", (user, message) => {
             const messageElement = document.createElement("li");
@@ -27,11 +52,93 @@
             document.getElementById("messagesList").appendChild(messageElement);
         });
 
+
+        connection.on("UpdateMicrophoneStatus", (user, isMicrophoneEnabled) => {
+            let currentUser = document.getElementById("userInput").value; // Get the current user
+            if (user === currentUser) { // Check if the user is the current user
+                const microphoneIndicator = document.getElementById("microphoneIndicator");
+                microphoneIndicator.style.backgroundColor = isMicrophoneEnabled ? "green" : "gray";
+            }
+        });
+
         document.getElementById("sendButton").addEventListener("click", () => {
             const message = document.getElementById("messageInput").value;
-            connection.invoke("SendMessage", hostId, message);
+            const user = document.getElementById("userInput").value;
+            connection.invoke("SendMessage", roomId, user, message);
             document.getElementById("messageInput").value = "";
         });
+
+
+        let isMicrophoneEnabled = false; // Global variable to track the state
+
+        document.getElementById("toggleMicrophoneButton").addEventListener("click", () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then((stream) => {
+                    const audioTrack = stream.getTracks()[0];
+                    isMicrophoneEnabled = !isMicrophoneEnabled; // Toggle the state
+                    audioTrack.enabled = isMicrophoneEnabled; // Set the state
+                    const user = document.getElementById("userInput").value;
+                    connection.invoke("ToggleMicrophone", roomId, user, isMicrophoneEnabled);
+                })
+                .catch((error) => {
+                    console.error("Error accessing microphone:", error);
+                });
+        });
+
+        let peerConnections = {};
+
+        document.getElementById("shareVideoButton").addEventListener("click", async () => {
+            const user = document.getElementById("userInput").value;
+
+            // Create a new video element for the user
+            const videoElement = document.createElement("video");
+            videoElement.id = `video-${user}`;
+            document.getElementById("videoContainer").appendChild(videoElement);
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    const videoElement = document.getElementById(`video-${user}`);
+                    videoElement.srcObject = stream;
+
+                    const peerConnection = new RTCPeerConnection();
+                    peerConnections[user] = peerConnection;
+                    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+                    peerConnection.onicecandidate = event => {
+                        if (event.candidate) {
+                            connection.invoke("SendIceCandidate", roomId, user, event.candidate);
+                        }
+                    };
+
+                    const offer = peerConnection.createOffer()
+                        .then(offer => {
+                            return peerConnection.setLocalDescription(offer);
+                        })
+                        .then(() => {
+                            connection.invoke("SendOffer", roomId, user, peerConnection.localDescription);
+                        });
+                })
+                .catch((error) => {
+                    console.error("Error accessing video:", error);
+                });
+        });
+
+
+        connection.on("ReceiveOffer", (user, offer) => {
+            peerConnections[user].setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = peerConnections[user].createAnswer();
+            peerConnections[user].setLocalDescription(answer);
+            connection.invoke("SendAnswer", roomId, user, answer);
+        });
+
+        connection.on("ReceiveAnswer", (user, answer) => {
+            peerConnections[user].setRemoteDescription(new RTCSessionDescription(answer));
+        });
+
+        connection.on("ReceiveIceCandidate", (user, candidate) => {
+            peerConnections[user].addIceCandidate(new RTCIceCandidate(candidate));
+        });
+
 
         connection.start().catch(err => console.error(err.toString()));
     </script>

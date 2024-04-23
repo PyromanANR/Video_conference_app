@@ -6,17 +6,28 @@ namespace Video_conference_app.Controllers
     {
         public IActionResult HostChat()
         {
-            var hostId = Guid.NewGuid().ToString();
-            var requestScheme = Request.Scheme; // Get the current request scheme
-            ViewBag.HostId = hostId;
-            ViewBag.RequestScheme = requestScheme; // Pass the request scheme to the view
+            // Generate a unique room ID
+            string roomId = Guid.NewGuid().ToString();
+            return RedirectToAction("JoinChat", "Chat", new { roomId });
+        }
+
+        public IActionResult JoinChat(string roomId)
+        {
+            // Validate the roomId parameter
+            if (string.IsNullOrEmpty(roomId))
+            {
+                return BadRequest("Invalid room ID");
+            }
+
+            // Generate a link for the client to join the chat room
+            var joinChatLink = Url.Action("JoinChat", "Chat", new { roomId }, Request.Scheme);
+
+            // You can pass additional data to the view if needed
+            ViewBag.RoomId = roomId;
+            ViewBag.JoinChatLink = joinChatLink;
+
             return View("HostView");
         }
 
-        public IActionResult JoinChat(string hostId)
-        {
-            ViewBag.HostId = hostId;
-            return View("JoinView");
-        }
     }
 }
