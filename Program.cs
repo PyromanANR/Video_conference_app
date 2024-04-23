@@ -2,12 +2,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using Video_conference_app.Data;
 using System.IO;
+using Video_conference_app.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<Video_conference_appContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Video_conference_appContext") ?? throw new InvalidOperationException("Connection string 'Video_conference_appContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+// Add SignalR services
+builder.Services.AddSignalR();
 
 AppDomain.CurrentDomain.SetData("DataDirectory", Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
@@ -32,5 +35,5 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
+app.MapHub<ChatHub>("/chatHub");
 app.Run();
