@@ -15,5 +15,7 @@ namespace Video_conference_app.Data
         }
 
         public DbSet<Video_conference_app.Models.User> User { get; set; } = default!;
+
+        public DbSet<Video_conference_app.Models.Schedule> Schedule { get; set; }
     }
 }
