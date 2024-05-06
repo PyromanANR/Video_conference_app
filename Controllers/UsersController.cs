@@ -153,5 +153,12 @@ namespace Video_conference_app.Controllers
         {
             return _context.User.Any(e => e.Id == id);
         }
+        
+        // GET: Users/SignIn
+        public IActionResult SignIn()
+        {
+            return View();
+        }
+        
     }
 }
