@@ -1,34 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Video_conference_app.Controllers
 {
     public class ChatController : Controller
     {
-
         public IActionResult Index()
         {
-            return View("JoinView");
-        }
-
-        public IActionResult HostChat()
-        {
             string roomId = Guid.NewGuid().ToString();
-            var joinChatLink = Url.Action("JoinChat", "Chat", new { roomId }, Request.Scheme);
-            ViewBag.JoinChatLink = joinChatLink;
-            return View("CreateView");
+
+            return RedirectToAction("Room", new { roomId });
         }
 
-        public IActionResult JoinChat(string roomId)
+        [HttpGet("/meeting/{roomId}")]
+        public IActionResult Room(string roomId)
         {
-            if (string.IsNullOrEmpty(roomId))
+            if (!Guid.TryParse(roomId, out _))
             {
-                return BadRequest("Invalid room ID");
+                return BadRequest("Invalid room ID format.");
             }
 
-            ViewBag.RoomId = roomId;
-
+            ViewBag.roomId = roomId;
             return View("HostView");
         }
-
     }
 }
