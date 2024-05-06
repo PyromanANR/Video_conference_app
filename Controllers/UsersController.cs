@@ -61,7 +61,9 @@ namespace Video_conference_app.Controllers
             {
                 _context.Add(user);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = "Account created successfully!";
+                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
             }
             return View(user);
         }
