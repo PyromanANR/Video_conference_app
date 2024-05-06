@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Video_conference_app.Data;
 using Video_conference_app.Models;
 
@@ -158,6 +159,26 @@ namespace Video_conference_app.Controllers
         public IActionResult SignIn()
         {
             return View();
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SignIn([Bind("Email,Password")] User user)
+        {
+            var activeUser = await _context.User.FirstOrDefaultAsync(u => u.Email == user.Email && u.Password == user.Password);
+
+            if (activeUser != null)
+            {
+                TempData["Success"] = "Log in successful!";
+                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+            }
+            else
+            {
+                TempData["Error"] = "Incorrect email or password!";
+            }
+
+            return View(user);
         }
         
     }
