@@ -19,16 +19,38 @@ namespace Video_conference_app.Hubs
 
     public class ChatHub : Hub
     {
+        //
+        private static ConcurrentDictionary<string, List<string>> messageHistory = new ConcurrentDictionary<string, List<string>>();
+        //
 
         public async Task SendMessage(string roomId, string user, string message)
         {
+            //
+            var fullMessage = $"{user}: {message}";
+            //
+
             await Clients.Group(roomId).SendAsync("ReceiveMessage", user, message);
+
+            //
+            messageHistory.AddOrUpdate(roomId, new List<string> { fullMessage }, (key, oldList) => {
+                oldList.Add(fullMessage);
+                return oldList;
+            });
+            //
         }
 
         public async Task JoinRoom(string roomId)
         {
             var connectionId = Context.ConnectionId;
             await Groups.AddToGroupAsync(connectionId, roomId);
+
+            //
+            if (messageHistory.TryGetValue(roomId, out var messages))
+            {
+                // Логування для перевірки того, що історія передається
+                await Clients.Client(connectionId).SendAsync("ReceiveMessageHistory", messages);
+            }
+            //
 
         }
 

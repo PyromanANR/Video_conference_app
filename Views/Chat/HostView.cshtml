@@ -44,7 +44,17 @@
             messageElement.textContent = `${user}: ${message}`;
             document.getElementById("messagesList").appendChild(messageElement);
         });
-
+        
+        //
+        connection.on("ReceiveMessageHistory", messages => {
+            const messagesList = document.getElementById("messagesList");
+            messages.forEach(message => {
+                const messageElement = document.createElement("li");
+                messageElement.textContent = message;
+                messagesList.appendChild(messageElement);
+            });
+        });
+        //
 
         connection.on("UpdateMicrophoneStatus", (user, isMicrophoneEnabled) => {
             let currentUser = document.getElementById("userInput").value; // Get the current user
