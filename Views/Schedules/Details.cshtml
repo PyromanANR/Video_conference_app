@@ -1,0 +1,40 @@
+﻿@model Video_conference_app.Models.Schedule
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Schedule</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Title)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.StartTime)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.StartTime)
+        </dd>
+        <dt class="col-sm-2">
+            <span class="text-bold">Organizer:</span><br />
+            <span class="text-bold">Name:</span><br />
+            <span class="text-bold">Email:</span>
+        </dt>
+        <dd class="col-sm-10">
+            <br/>
+            @Html.DisplayFor(model => model.Organizer.Name)<br />
+            @Html.DisplayFor(model => model.Organizer.Email)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
