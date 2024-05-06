@@ -182,6 +182,12 @@ namespace Video_conference_app.Controllers
 
             return View(user);
         }
-        
+
+        public IActionResult LogOut()
+        {
+            HttpContext.Session.Clear();
+            TempData["Info"] = "You are logged out of your account!";
+            return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
     }
 }
