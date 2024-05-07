@@ -6,6 +6,12 @@
 
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
+@if (TempData["Error"] != null)
+{
+<div class="alert alert-danger">
+    @TempData["Error"]
+</div>
+}
 
 <h1>Sign Up</h1>
 
@@ -31,7 +37,7 @@
             </div>
             <div class="form-group">
                 <label for="ConfirmPassword" class="control-label">Confirm Password</label>
-                <input id="ConfirmPassword" type="password" class="form-control" />
+                <input id="ConfirmPassword" type="password" class="form-control" name="ConfirmPassword"/>
                 <span id="ConfirmPasswordError" class="text-danger"></span>
             </div>
             <div class="form-group">

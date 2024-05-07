@@ -55,15 +55,20 @@ namespace Video_conference_app.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password")] User user)
+        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password")] User user, string ConfirmPassword)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Account created successfully!";
-                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
-                return RedirectToAction(nameof(HomeController.Index), "Home");
+                if (ConfirmPassword == user.Password)
+                {
+                    _context.Add(user);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Account created successfully!";
+                    HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
+                    return RedirectToAction(nameof(HomeController.Index), "Home");
+                }
+
+                TempData["Error"] = "Passwords have to equal";
             }
             return View(user);
         }
