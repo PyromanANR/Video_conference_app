@@ -1,38 +1,44 @@
 ﻿@model Video_conference_app.Models.User
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "SignIn";
 }
 
-<h1>Edit</h1>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-<h4>User</h4>
+<h1>Sign In</h1>
+
+@if (TempData["Error"] != null)
+{
+<div class="alert alert-danger">
+    @TempData["Error"]
+</div>
+}
+
 <hr />
-<div class="row">
+<div class="row d-flex justify-content-center align-items-center">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="SignIn">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
             <div class="form-group">
                 <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
+                <input asp-for="Email" class="form-control"/>
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" />
+                <input asp-for="Password" class="form-control" id="Password"/>
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Sign In" class="btn btn-primary"/>
             </div>
         </form>
     </div>
+</div>
+
+<div class="text-right">
+    <a asp-action="Create">Sign Up</a>
 </div>
 
 @section Scripts {

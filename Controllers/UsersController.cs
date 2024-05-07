@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Video_conference_app.Data;
 using Video_conference_app.Models;
 
@@ -54,13 +55,20 @@ namespace Video_conference_app.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password")] User user)
+        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password")] User user, string ConfirmPassword)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ConfirmPassword == user.Password)
+                {
+                    _context.Add(user);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Account created successfully!";
+                    HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
+                    return RedirectToAction(nameof(HomeController.Index), "Home");
+                }
+
+                TempData["Error"] = "Passwords have to equal";
             }
             return View(user);
         }
@@ -99,6 +107,7 @@ namespace Video_conference_app.Controllers
                 {
                     _context.Update(user);
                     await _context.SaveChangesAsync();
+                    TempData["Info"] = "Account was successfully updated!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -111,7 +120,7 @@ namespace Video_conference_app.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
             }
             return View(user);
         }
@@ -146,12 +155,47 @@ namespace Video_conference_app.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            HttpContext.Session.Clear();
+            TempData["Info"] = "Account was successfully deleted!";
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
         private bool UserExists(int id)
         {
             return _context.User.Any(e => e.Id == id);
+        }
+        
+        // GET: Users/SignIn
+        public IActionResult SignIn()
+        {
+            return View();
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SignIn([Bind("Email,Password")] User user)
+        {
+            var activeUser = await _context.User.FirstOrDefaultAsync(u => u.Email == user.Email && u.Password == user.Password);
+
+            if (activeUser != null)
+            {
+                TempData["Success"] = "Log in successful!";
+                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(activeUser));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+            }
+            else
+            {
+                TempData["Error"] = "Incorrect email or password!";
+            }
+
+            return View(user);
+        }
+
+        public IActionResult LogOut()
+        {
+            HttpContext.Session.Clear();
+            TempData["Info"] = "You are logged out of your account!";
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
     }
 }
