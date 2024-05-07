@@ -102,6 +102,7 @@ namespace Video_conference_app.Controllers
                 {
                     _context.Update(user);
                     await _context.SaveChangesAsync();
+                    TempData["Info"] = "Account was successfully updated!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -114,7 +115,7 @@ namespace Video_conference_app.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
             }
             return View(user);
         }
@@ -149,7 +150,9 @@ namespace Video_conference_app.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            HttpContext.Session.Clear();
+            TempData["Info"] = "Account was successfully deleted!";
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
         private bool UserExists(int id)
@@ -172,7 +175,7 @@ namespace Video_conference_app.Controllers
             if (activeUser != null)
             {
                 TempData["Success"] = "Log in successful!";
-                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user));
+                HttpContext.Session.SetString("User", JsonConvert.SerializeObject(activeUser));
                 return RedirectToAction(nameof(HomeController.Index), "Home");
             }
             else
