@@ -1,6 +1,8 @@
-﻿<!-- HostView.cshtml -->
-<div class="container">
+﻿<div class="container">
     <h1>VideoChat</h1>
+</div>
+
+<div id="chatSection" style="display: none;">
     <div>
         <label>Enter your name:</label>
         <input type="text" id="userInput" />
@@ -10,20 +12,32 @@
         <input type="text" id="messageInput" />
         <button id="sendButton">Send</button>
     </div>
-    <div>
-        <button id="shareVideoButton">Share Video</button>
-        <button id="toggleMicrophoneButton">Toggle Microphone</button>
-        <span id="microphoneIndicator" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: rgb(128,128,128);"></span>
-    </div>
     <div id="videoContainer"></div>
     <ul id="messagesList"></ul>
 </div>
 
+<button id="chatButton" class="bottom-center">Chat</button>
+
+
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    
+    <script>
+    const chatButton = document.getElementById("chatButton");
+    const chatSection = document.getElementById("chatSection");
+    
+    chatButton.addEventListener("click", function() {
+        if (chatSection.style.display === "none") {
+            chatSection.style.display = "block";
+        } else {
+            chatSection.style.display = "none";
+        }
+    });
+    </script>
+    
     <script>
         const roomId = "@ViewBag.RoomId";
-        let videoStreams = [];
+
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .build();
@@ -45,7 +59,6 @@
             document.getElementById("messagesList").appendChild(messageElement);
         });
         
-        //
         connection.on("ReceiveMessageHistory", messages => {
             const messagesList = document.getElementById("messagesList");
             messages.forEach(message => {
@@ -54,11 +67,10 @@
                 messagesList.appendChild(messageElement);
             });
         });
-        //
 
         connection.on("UpdateMicrophoneStatus", (user, isMicrophoneEnabled) => {
-            let currentUser = document.getElementById("userInput").value; // Get the current user
-            if (user === currentUser) { // Check if the user is the current user
+            let currentUser = document.getElementById("userInput").value; 
+            if (user === currentUser) { 
                 const microphoneIndicator = document.getElementById("microphoneIndicator");
                 microphoneIndicator.style.backgroundColor = isMicrophoneEnabled ? "green" : "gray";
             }
@@ -72,14 +84,14 @@
         });
 
 
-        let isMicrophoneEnabled = false; // Global variable to track the state
+        let isMicrophoneEnabled = false; 
 
         document.getElementById("toggleMicrophoneButton").addEventListener("click", () => {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then((stream) => {
                     const audioTrack = stream.getTracks()[0];
-                    isMicrophoneEnabled = !isMicrophoneEnabled; // Toggle the state
-                    audioTrack.enabled = isMicrophoneEnabled; // Set the state
+                    isMicrophoneEnabled = !isMicrophoneEnabled; 
+                    audioTrack.enabled = isMicrophoneEnabled; 
                     const user = document.getElementById("userInput").value;
                     connection.invoke("ToggleMicrophone", roomId, user, isMicrophoneEnabled);
                 })
@@ -93,7 +105,6 @@
         document.getElementById("shareVideoButton").addEventListener("click", async () => {
             const user = document.getElementById("userInput").value;
 
-            // Create a new video element for the user
             const videoElement = document.createElement("video");
             videoElement.id = `video-${user}`;
             document.getElementById("videoContainer").appendChild(videoElement);
