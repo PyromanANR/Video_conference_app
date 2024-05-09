@@ -1,9 +1,17 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Newtonsoft.Json;
+using Video_conference_app.Models;
+
 namespace Video_conference_app.Hubs
 {
     public class ChatHub : Hub
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public ChatHub(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
         public async Task JoinRoom(string roomId, string userId)
         {
             Users.list.Add(Context.ConnectionId, userId);
@@ -17,10 +25,15 @@ namespace Video_conference_app.Hubs
             return base.OnDisconnectedAsync(exception);
         }
     
-        // Add this method to your SignalR hub class
         public async Task SendMessage(string roomId, string senderId, string message)
         {
-            await Clients.Groups(roomId).SendAsync("ReceiveMessage", senderId, message);
+            var userJson = _httpContextAccessor.HttpContext.Session.GetString("User");
+            string user = "undefined user";
+            if (userJson != null)
+            {
+                user = JsonConvert.DeserializeObject<User>(userJson).Name;
+            }
+            await Clients.Groups(roomId).SendAsync("ReceiveMessage", message, user);
         }
     }
 }

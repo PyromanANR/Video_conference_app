@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+
 using Video_conference_app.Hubs;
 using Video_conference_app.Data;
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,7 @@ builder.Services.AddDbContext<Video_conference_appContext>(options =>
 builder.Services.AddControllersWithViews();
 // Add SignalR services
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 
 // Add session services
 builder.Services.AddDistributedMemoryCache(); // Adds a default in-memory implementation of IDistributedCache

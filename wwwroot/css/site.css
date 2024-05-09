@@ -11,22 +11,54 @@ div[video-grid] > video{
   object-fit: cover;
 }
 
-#chatSection {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 300px; 
-  height: 100%;
-  background-color: #f0f0f0;
-  padding: 20px;
-  box-sizing: border-box;
-  border-left: 1px solid #ccc; 
-  display: none;
-}
-
 .bottom-center {
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
 }
+
+.hidden {
+  display: none;
+}
+
+.bottom-buttons {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999; 
+}
+
+.chat-section {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background-color: white;
+  border: 1px solid #ccc;
+  width: 300px;
+  height: 430px; 
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.chat-section.hidden {
+  transform: translateY(-150%);
+}
+
+.chat-window {
+  height: calc(100% - 90px); 
+  padding: 10px;
+}
+
+.chat-input {
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input input[type="text"] {
+  width: calc(100% - 70px);
+  margin-right: 10px;
+}
+
