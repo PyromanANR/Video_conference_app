@@ -18,7 +18,7 @@ namespace Video_conference_app.Hubs
             });
         }
 
-        public async Task JoinRoom(string roomId)
+        public async Task JoinRoom(string roomId, string personId)
         {
             var connectionId = Context.ConnectionId;
             await Groups.AddToGroupAsync(connectionId, roomId);
