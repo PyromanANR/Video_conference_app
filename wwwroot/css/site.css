@@ -1,22 +1,64 @@
-html {
-  font-size: 14px;
+div[video-grid]{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 300px);
+  grid-auto-rows: 300px;
+  gap: 25px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+div[video-grid] > video{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.bottom-center {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+.hidden {
+  display: none;
 }
 
-body {
-  margin-bottom: 60px;
+.bottom-buttons {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999; 
 }
+
+.chat-section {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background-color: white;
+  border: 1px solid #ccc;
+  width: 300px;
+  height: 430px; 
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.chat-section.hidden {
+  transform: translateY(-150%);
+}
+
+.chat-window {
+  height: calc(100% - 90px); 
+  padding: 10px;
+}
+
+.chat-input {
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input input[type="text"] {
+  width: calc(100% - 70px);
+  margin-right: 10px;
+}
+

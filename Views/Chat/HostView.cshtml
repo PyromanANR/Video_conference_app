@@ -1,148 +1,170 @@
-﻿<!-- HostView.cshtml -->
-<div class="container">
-    <h1>VideoChat</h1>
-    <div>
-        <label>Enter your name:</label>
-        <input type="text" id="userInput" />
+﻿<div class="container">
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div video-grid class="text-center"></div>
+        </div>
     </div>
-    <div>
-        <label>Enter a message:</label>
-        <input type="text" id="messageInput" />
-        <button id="sendButton">Send</button>
-    </div>
-    <div>
-        <button id="shareVideoButton">Share Video</button>
-        <button id="toggleMicrophoneButton">Toggle Microphone</button>
-        <span id="microphoneIndicator" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: rgb(128,128,128);"></span>
-    </div>
-    <div id="videoContainer"></div>
-    <ul id="messagesList"></ul>
 </div>
 
-@section Scripts {
-    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
-    <script>
-        const roomId = "@ViewBag.RoomId";
-        let videoStreams = [];
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chatHub")
-            .build();
+<div class="chat-section hidden">
+    <div class="chat-window">
+        <ul id="messages"></ul>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
+    </div>
+</div>
 
-        connection.start()
-            .then(() => {
-                connection.invoke("JoinRoom", roomId);
+<div class="bottom-buttons">
+    <button id="toggleVideo" class="btn btn-primary">Toggle Video</button>
+    <button id="toggleAudio" class="btn btn-primary">Toggle Audio</button>
+    <button id="toggleChatButton" class="btn btn-success">Show Chat</button>
+    <button id="copyLinkButton" class="btn btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+        </svg>
+        Copy Meeting Link
+    </button>
+</div>
 
-            })
-            .catch(err => console.error(err.toString()));
 
-        window.addEventListener('beforeunload', () => {
-            connection.invoke("LeaveRoom", roomId);
+<script src="~/js/signalr/dist/browser/signalr.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+<script>
+    document.getElementById("toggleChatButton").addEventListener("click", function() {
+        var chatSection = document.querySelector(".chat-section");
+        chatSection.classList.toggle("hidden");
+    });
+
+</script>
+
+<script>
+    const copyLinkButton = document.getElementById('copyLinkButton');
+    
+    copyLinkButton.addEventListener('click', () => {
+        const meetingLink = window.location.href;
+        navigator.clipboard.writeText(meetingLink).then(() => {
+            alert('Meeting link copied to clipboard!');
+        }).catch((error) => {
+            console.error('Failed to copy meeting link: ', error);
+        });
+    });
+</script>
+
+<script>
+        const ROOM_ID = `@ViewBag.roomId`;
+        let userId = null;
+        let localStream = null;
+        const Peers = {};
+
+        const connection = new signalR.HubConnectionBuilder().withUrl('/chatHub').build();
+
+        const startSignalR = async () => {
+            await connection.start();
+            await connection.invoke('JoinRoom', ROOM_ID, userId);
+        };
+
+        const myPeer = new Peer();
+
+        myPeer.on('open', id => {
+            userId = id;
+            startSignalR();
         });
 
-        connection.on("ReceiveMessage", (user, message) => {
-            const messageElement = document.createElement("li");
-            messageElement.textContent = `${user}: ${message}`;
-            document.getElementById("messagesList").appendChild(messageElement);
-        });
-        
-        //
-        connection.on("ReceiveMessageHistory", messages => {
-            const messagesList = document.getElementById("messagesList");
-            messages.forEach(message => {
-                const messageElement = document.createElement("li");
-                messageElement.textContent = message;
-                messagesList.appendChild(messageElement);
-            });
-        });
-        //
+        const videoGrid = document.querySelector('[video-grid]');
+        const myVideo = document.createElement('video');
+        myVideo.muted = true;
 
-        connection.on("UpdateMicrophoneStatus", (user, isMicrophoneEnabled) => {
-            let currentUser = document.getElementById("userInput").value; // Get the current user
-            if (user === currentUser) { // Check if the user is the current user
-                const microphoneIndicator = document.getElementById("microphoneIndicator");
-                microphoneIndicator.style.backgroundColor = isMicrophoneEnabled ? "green" : "gray";
+        navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true
+        }).then(stream => {
+            addVideoStream(myVideo, stream);
+            localStream = stream;
+        });
+
+        const toggleVideoButton = document.getElementById('toggleVideo');
+        toggleVideoButton.addEventListener('click', () => {
+            const enabled = localStream.getVideoTracks()[0].enabled;
+            localStream.getVideoTracks()[0].enabled = !enabled;
+            toggleVideoButton.textContent = enabled ? 'Turn On Video' : 'Turn Off Video';
+        });
+
+        const toggleAudioButton = document.getElementById('toggleAudio');
+        toggleAudioButton.addEventListener('click', () => {
+            const enabled = localStream.getAudioTracks()[0].enabled;
+            localStream.getAudioTracks()[0].enabled = !enabled;
+            toggleAudioButton.textContent = enabled ? 'Turn On Audio' : 'Turn Off Audio';
+        });
+
+        connection.on('user-connected', id => {
+            if (userId === id) return;
+            connectNewUser(id, localStream);
+        });
+
+        connection.on('user-disconnected', id => {
+            if (Peers[id]){
+                Peers[id].close();
+                delete Peers[id];
             }
         });
 
-        document.getElementById("sendButton").addEventListener("click", () => {
-            const message = document.getElementById("messageInput").value;
-            const user = document.getElementById("userInput").value;
-            connection.invoke("SendMessage", roomId, user, message);
-            document.getElementById("messageInput").value = "";
+        myPeer.on('call', call => {
+            call.answer(localStream);
+            const userVideo = document.createElement('video');
+            call.on('stream', userVideoStream => {
+                addVideoStream(userVideo, userVideoStream);
+            });
         });
 
+        const addVideoStream = (video, stream) => {
+            video.srcObject = stream;
+            video.addEventListener('loadedmetadata', () => {
+                video.play();
+            });
+            videoGrid.appendChild(video);
+        };
 
-        let isMicrophoneEnabled = false; // Global variable to track the state
+        const connectNewUser = (userId, localStream) => {
+            const call = myPeer.call(userId, localStream);
+            const userVideo = document.createElement('video');
 
-        document.getElementById("toggleMicrophoneButton").addEventListener("click", () => {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then((stream) => {
-                    const audioTrack = stream.getTracks()[0];
-                    isMicrophoneEnabled = !isMicrophoneEnabled; // Toggle the state
-                    audioTrack.enabled = isMicrophoneEnabled; // Set the state
-                    const user = document.getElementById("userInput").value;
-                    connection.invoke("ToggleMicrophone", roomId, user, isMicrophoneEnabled);
-                })
-                .catch((error) => {
-                    console.error("Error accessing microphone:", error);
-                });
+            call.on('stream', userVideoStream => {
+                addVideoStream(userVideo, userVideoStream);
+            });
+
+            call.on('close', () => {
+                userVideo.remove();
+            });
+
+            Peers[userId] = call;
+        };
+        
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesList = document.getElementById('messages');
+        
+        const sendMessage = () => {
+            const message = chatInput.value;
+            if (message.trim() !== '') {
+                connection.invoke('SendMessage', ROOM_ID, userId, message);
+                chatInput.value = '';
+            }
+        };
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
-
-        let peerConnections = {};
-
-        document.getElementById("shareVideoButton").addEventListener("click", async () => {
-            const user = document.getElementById("userInput").value;
-
-            // Create a new video element for the user
-            const videoElement = document.createElement("video");
-            videoElement.id = `video-${user}`;
-            document.getElementById("videoContainer").appendChild(videoElement);
-
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then((stream) => {
-                    const videoElement = document.getElementById(`video-${user}`);
-                    videoElement.srcObject = stream;
-
-                    const peerConnection = new RTCPeerConnection();
-                    peerConnections[user] = peerConnection;
-                    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
-
-                    peerConnection.onicecandidate = event => {
-                        if (event.candidate) {
-                            connection.invoke("SendIceCandidate", roomId, user, event.candidate);
-                        }
-                    };
-
-                    const offer = peerConnection.createOffer()
-                        .then(offer => {
-                            return peerConnection.setLocalDescription(offer);
-                        })
-                        .then(() => {
-                            connection.invoke("SendOffer", roomId, user, peerConnection.localDescription);
-                        });
-                })
-                .catch((error) => {
-                    console.error("Error accessing video:", error);
-                });
+        
+        sendButton.addEventListener('click', sendMessage);
+        
+        connection.on('ReceiveMessage', (message, userName) => {
+            const li = document.createElement('li');
+            li.textContent = `${userName}: ${message}`;
+            messagesList.appendChild(li);
         });
-
-
-        connection.on("ReceiveOffer", (user, offer) => {
-            peerConnections[user].setRemoteDescription(new RTCSessionDescription(offer));
-            const answer = peerConnections[user].createAnswer();
-            peerConnections[user].setLocalDescription(answer);
-            connection.invoke("SendAnswer", roomId, user, answer);
-        });
-
-        connection.on("ReceiveAnswer", (user, answer) => {
-            peerConnections[user].setRemoteDescription(new RTCSessionDescription(answer));
-        });
-
-        connection.on("ReceiveIceCandidate", (user, candidate) => {
-            peerConnections[user].addIceCandidate(new RTCIceCandidate(candidate));
-        });
-
-
-        connection.start().catch(err => console.error(err.toString()));
     </script>
-}
