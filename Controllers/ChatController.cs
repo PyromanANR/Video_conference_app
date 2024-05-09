@@ -15,8 +15,10 @@ namespace Video_conference_app.Controllers
             string roomId = Guid.NewGuid().ToString();
             var joinChatLink = Url.Action("JoinChat", "Chat", new { roomId }, Request.Scheme);
             ViewBag.JoinChatLink = joinChatLink;
-            return View("CreateView");
+    
+            return RedirectToAction("JoinChat", "Chat", new { roomId });
         }
+
 
         public IActionResult JoinChat(string roomId)
         {

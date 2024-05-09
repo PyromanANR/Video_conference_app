@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+
 using Video_conference_app.Hubs;
 using Video_conference_app.Data;
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,16 @@ builder.Services.AddDbContext<Video_conference_appContext>(options =>
 builder.Services.AddControllersWithViews();
 // Add SignalR services
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
+
+// Add session services
+builder.Services.AddDistributedMemoryCache(); // Adds a default in-memory implementation of IDistributedCache
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session will last 30 minutes
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 AppDomain.CurrentDomain.SetData("DataDirectory", Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
@@ -31,6 +42,9 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+// Use session
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",

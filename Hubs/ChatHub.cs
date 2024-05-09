@@ -1,68 +1,39 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Newtonsoft.Json;
+using Video_conference_app.Models;
+
 namespace Video_conference_app.Hubs
 {
-
-    public class RTCSessionDescriptionInit
-    {
-        public string Type { get; set; }
-        public string Sdp { get; set; }
-    }
-
-    public class RTCIceCandidateInit
-    {
-        public string Candidate { get; set; }
-        public string SdpMid { get; set; }
-        public int SdpMLineIndex { get; set; }
-    }
-
-
     public class ChatHub : Hub
     {
-
-        public async Task SendMessage(string roomId, string user, string message)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public ChatHub(IHttpContextAccessor httpContextAccessor)
         {
-            await Clients.Group(roomId).SendAsync("ReceiveMessage", user, message);
+            _httpContextAccessor = httpContextAccessor;
+        }
+        public async Task JoinRoom(string roomId, string userId)
+        {
+            Users.list.Add(Context.ConnectionId, userId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+            await Clients.Groups(roomId).SendAsync("user-connected", userId);
         }
 
-        public async Task JoinRoom(string roomId)
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
-            var connectionId = Context.ConnectionId;
-            await Groups.AddToGroupAsync(connectionId, roomId);
-
+            Clients.All.SendAsync("user-disconnected", Users.list[Context.ConnectionId]);
+            return base.OnDisconnectedAsync(exception);
         }
-
-        public async Task LeaveRoom(string roomId)
+    
+        public async Task SendMessage(string roomId, string senderId, string message)
         {
-            // Get the current user's connection ID
-            var connectionId = Context.ConnectionId;
-
-            await Groups.RemoveFromGroupAsync(connectionId, roomId);
+            var userJson = _httpContextAccessor.HttpContext.Session.GetString("User");
+            string user = "undefined user";
+            if (userJson != null)
+            {
+                user = JsonConvert.DeserializeObject<User>(userJson).Name;
+            }
+            await Clients.Groups(roomId).SendAsync("ReceiveMessage", message, user);
         }
-
-
-        public async Task ToggleMicrophone(string roomId, string user, bool isMicrophoneEnabled)
-        {
-            await Clients.Group(roomId).SendAsync("UpdateMicrophoneStatus", user, isMicrophoneEnabled);
-        }
-
-        public async Task SendOffer(string roomId, RTCSessionDescriptionInit offer)
-        {
-            // Forward the offer to the other peer(s) in the room
-            await Clients.OthersInGroup(roomId).SendAsync("ReceiveOffer", offer);
-        }
-
-        public async Task SendAnswer(string roomId, RTCSessionDescriptionInit answer)
-        {
-            // Forward the answer to the other peer(s) in the room
-            await Clients.OthersInGroup(roomId).SendAsync("ReceiveAnswer", answer);
-        }
-
-        public async Task SendIceCandidate(string roomId, RTCIceCandidateInit candidate)
-        {
-            // Forward the ICE candidate to the other peer(s) in the room
-            await Clients.OthersInGroup(roomId).SendAsync("ReceiveIceCandidate", candidate);
-        }
-
     }
 }

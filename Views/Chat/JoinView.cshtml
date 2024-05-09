@@ -1,21 +1,25 @@
-﻿<!DOCTYPE html>
-<html>
-<body>
-
-    <h2>Video Chat Join</h2>
-
-    <p>Please enter the link to join:</p>
-
-    <input type="text" id="myLink" value="">
-
-    <button onclick="myFunction()">Join</button>
+﻿<div class="container">
+        <div class="row">
+            <div class="col-md-6 mx-auto">
+                <div class="card shadow p-4">
+                    <h2 class="mb-4 text-center">Video Chat Join</h2>
+                    <form>
+                        <div class="mb-3">
+                            <label for="Link" class="form-label">Link to join:</label>
+                            <input type="text" class="form-control" id="Link" value="">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="myFunction()">Join</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 
     <script>
         function myFunction() {
-            var link = document.getElementById("myLink").value;
+            var link = document.getElementById("Link").value;
             window.location.href = link;
         }
     </script>
 
-</body>
-</html>

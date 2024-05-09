@@ -1,10 +1,14 @@
-﻿<!DOCTYPE html>
+﻿@using Newtonsoft.Json
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Video_conference_app</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Video_conference_app.styles.css" asp-append-version="true" />
 </head>
@@ -17,6 +21,23 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+                @if (Context.Session.GetString("User") != null)
+                {
+                    var user = JsonConvert.DeserializeObject<User>(Context.Session.GetString("User"));
+                    string name = user.Name;
+                    int id = user.Id;
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            @name
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a class="dropdown-item" type="button" asp-controller="Users" asp-action="Edit" asp-route-id="@id">Edit</a></li>
+                            <li><a class="dropdown-item" type="button" asp-controller="Users" asp-action="Details" asp-route-id="@id">Details</a></li>
+                            <li><a class="dropdown-item" type="button" asp-controller="Users" asp-action="LogOut">Logout</a></li>
+                            <li><a class="dropdown-item" type="button" asp-controller="Users" asp-action="Delete" asp-route-id="@id">Delete account</a></li>
+                        </ul>
+                    </div>
+                }
             </div>
         </nav>
     </header>
@@ -25,12 +46,6 @@
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2024 - Video_conference_app - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
