@@ -30,8 +30,15 @@
             <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" />
             <path d="M2 4.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H3v2.5a.5.5 0 0 1-1 0zm12 7a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H13V8.5a.5.5 0 0 1 1 0z" />
         </svg>
-        Share Screen
+        <span id="ShareScreenButtonText">Share Screen</span>
         </button>
+    <button id="recordScreenButton" class="btn btn-outline-danger">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-record-circle" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path d="M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+        </svg>
+        <span id="recordScreenButtonText">Record Screen</span>
+    </button>
     <button id="toggleChatButton" class="btn btn-success">Show Chat</button>
     <button id="copyLinkButton" class="btn btn-secondary">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
@@ -258,7 +265,7 @@
         shareScreenButton.addEventListener('click', async () => {
             try {
                 if (!screenStream) {
-                    shareScreenButton.textContent = 'Stop Share'
+                    document.getElementById('ShareScreenButtonText').textContent = 'Stop Share';
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     connection.invoke('SetScreenSharingStatus', ROOM_ID, userId, true);
                     Object.keys(Peers).forEach(peerId => {
@@ -274,7 +281,7 @@
 
                     screenShareContainer.classList.remove('hidden');
                 } else {
-                    shareScreenButton.textContent = "Share Screen"
+                    document.getElementById('ShareScreenButtonText').textContent = 'Share Screen';
                     screenStream.getTracks().forEach(track => track.stop());
                     screenStream = null;
                     const screenShareContent = document.querySelector('.screen-share-content');
@@ -286,4 +293,49 @@
                 console.error('Error accessing screen sharing:', err);
             }
         });
+
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    document.getElementById('recordScreenButton').addEventListener('click', async () => {
+        if (!mediaRecorder) {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            mediaRecorder = new MediaRecorder(screenStream);
+
+            mediaRecorder.ondataavailable = function (event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = function () {
+                const blob = new Blob(recordedChunks, {
+                    type: 'video/webm'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'screen-record.webm';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            };
+
+            mediaRecorder.start();
+            document.getElementById('recordScreenButtonText').textContent = 'Stop Recording';
+            alert('Recording has started');
+        } else {
+            mediaRecorder.stop();
+            mediaRecorder = null;
+            recordedChunks = [];
+            document.getElementById('recordScreenButtonText').textContent = 'Record Screen';
+            alert('Recording has stopped and the video file has been downloaded');
+        }
+    });
+
+
     </script>
