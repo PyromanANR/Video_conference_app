@@ -1,4 +1,10 @@
-﻿<div class="container">
+﻿<div class="screen-share-container hidden">
+    <div class="resize-handle"></div>
+    <div class="screen-share-content"></div>
+</div>
+
+
+<div class="container">
     <div class="row mt-5">
         <div class="col-md-12">
             <div video-grid class="text-center"></div>
@@ -19,6 +25,13 @@
 <div class="bottom-buttons">
     <button id="toggleVideo" class="btn btn-primary">Toggle Video</button>
     <button id="toggleAudio" class="btn btn-primary">Toggle Audio</button>
+    <button id="shareScreenButton" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-aspect-ratio" viewBox="0 0 16 16">
+            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" />
+            <path d="M2 4.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H3v2.5a.5.5 0 0 1-1 0zm12 7a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H13V8.5a.5.5 0 0 1 1 0z" />
+        </svg>
+        Share Screen
+        </button>
     <button id="toggleChatButton" class="btn btn-success">Show Chat</button>
     <button id="copyLinkButton" class="btn btn-secondary">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
@@ -31,7 +44,7 @@
 
 <script src="~/js/signalr/dist/browser/signalr.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-<link rel="stylesheet" type="text/css" href="/css/videostyle2.css">
+<link rel="stylesheet" type="text/css" href="/css/videostyle6.css">
 
 <script>
     document.getElementById("toggleChatButton").addEventListener("click", function() {
@@ -122,8 +135,10 @@
             }
         });
 
-        myPeer.on('call', call => {
+        let isScreenSharing = false
+        myPeer.on('call', async call => {
             call.answer(localStream);
+
             const userVideo = document.createElement('video');
             const wrapper = document.createElement('div');
             wrapper.classList.add('video-wrapper');
@@ -138,10 +153,23 @@
             });
             wrapper.appendChild(userVideo);
             wrapper.appendChild(label);
-            call.on('stream', userVideoStream => {
-            addVideoStream(userVideo, userVideoStream, wrapper);
-            });
+            if (isScreenSharing) {
+                call.on('stream', remoteStream => {
+                    const video = document.createElement('video');
+                    video.srcObject = remoteStream;
+                    video.autoplay = true;
+                    screenShareContent.appendChild(video);
+                    screenShareContainer.classList.remove('hidden');
+                });
+            }
+            else {               
+                call.on('stream', userVideoStream => {
+                    addVideoStream(userVideo, userVideoStream, wrapper);
+                });
+            }
+
         });
+
 
         const addVideoStream = (video, stream, wrapper) => {
             video.srcObject = stream;
@@ -159,7 +187,7 @@
                 const call = myPeer.call(userId, localStream);
                 const conn = myPeer.connect(userId);
                 conn.on('open', () => {
-                    conn.send(MyName);
+                conn.send(MyName);
                 });
 
                 const userVideo = document.createElement('video');
@@ -210,5 +238,52 @@
             const li = document.createElement('li');
             li.textContent = `${userName}: ${message}`;
             messagesList.appendChild(li);
+        });
+
+        connection.on('ScreenSharingStatusChanged', (userId, status) => {
+            isScreenSharing = status
+            if (isScreenSharing === false) {
+            screenShareContent.innerHTML = '';
+            screenShareContainer.classList.add('hidden');
+        }
+        });
+
+
+        const shareScreenButton = document.getElementById('shareScreenButton');
+        const screenShareContainer = document.querySelector('.screen-share-container');
+        const screenShareContent = document.querySelector('.screen-share-content');
+
+        let screenStream = null;
+
+        shareScreenButton.addEventListener('click', async () => {
+            try {
+                if (!screenStream) {
+                    shareScreenButton.textContent = 'Stop Share'
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    connection.invoke('SetScreenSharingStatus', ROOM_ID, userId, true);
+                    Object.keys(Peers).forEach(peerId => {
+                        const call = myPeer.call(peerId, screenStream);
+                    });
+
+                    const video = document.createElement('video');
+                    video.srcObject = screenStream;
+                    video.autoplay = true;
+
+                    const screenShareContent = document.querySelector('.screen-share-content');
+                    screenShareContent.appendChild(video);
+
+                    screenShareContainer.classList.remove('hidden');
+                } else {
+                    shareScreenButton.textContent = "Share Screen"
+                    screenStream.getTracks().forEach(track => track.stop());
+                    screenStream = null;
+                    const screenShareContent = document.querySelector('.screen-share-content');
+                    screenShareContent.innerHTML = '';
+                    screenShareContainer.classList.add('hidden');
+                    connection.invoke('SetScreenSharingStatus', ROOM_ID, userId, false);
+                }
+            } catch (err) {
+                console.error('Error accessing screen sharing:', err);
+            }
         });
     </script>

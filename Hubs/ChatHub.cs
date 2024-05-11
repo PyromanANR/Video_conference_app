@@ -46,5 +46,25 @@ namespace Video_conference_app.Hubs
             }
             return await Task.FromResult(user);
         }
+
+        private Dictionary<string, bool> screenSharingStatus = new Dictionary<string, bool>();
+
+        public async Task SetScreenSharingStatus(string roomId, string userId, bool isSharing)
+        {
+            screenSharingStatus[userId] = isSharing;
+            await Clients.Groups(roomId).SendAsync("ScreenSharingStatusChanged", userId, isSharing);
+        }
+
+        public async Task<bool> GetScreenSharingStatus(string userId)
+        {
+            if (screenSharingStatus.ContainsKey(userId))
+            {
+                return await Task.FromResult(screenSharingStatus[userId]);
+            }
+            else
+            {
+                return await Task.FromResult(false);
+            }
+        }
     }
 }
