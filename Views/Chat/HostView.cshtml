@@ -31,6 +31,7 @@
 
 <script src="~/js/signalr/dist/browser/signalr.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/videostyle2.css">
 
 <script>
     document.getElementById("toggleChatButton").addEventListener("click", function() {
@@ -77,11 +78,21 @@
         const myVideo = document.createElement('video');
         myVideo.muted = true;
 
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('video-wrapper');
+
+        const label = document.createElement('div');
+        label.classList.add('video-label');
+        label.textContent = "Me";
+
+        wrapper.appendChild(myVideo);
+        wrapper.appendChild(label);
+
         navigator.mediaDevices.getUserMedia({
             audio: true,
             video: true
         }).then(stream => {
-            addVideoStream(myVideo, stream);
+        addVideoStream(myVideo, stream, wrapper);
             localStream = stream;
         });
 
@@ -99,9 +110,9 @@
             toggleAudioButton.textContent = enabled ? 'Turn On Audio' : 'Turn Off Audio';
         });
 
-        connection.on('user-connected', id => {
+        connection.on('user-connected', (id, userName) => {
             if (userId === id) return;
-            connectNewUser(id, localStream);
+            connectNewUser(id, localStream, userName);
         });
 
         connection.on('user-disconnected', id => {
@@ -114,33 +125,66 @@
         myPeer.on('call', call => {
             call.answer(localStream);
             const userVideo = document.createElement('video');
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('video-wrapper');
+
+            const label = document.createElement('div');
+            label.classList.add('video-label');
+            myPeer.on('connection', conn => {
+                conn.on('data', (userName) => {
+                    console.log(userName);
+                    label.textContent = userName;
+                });
+            });
+            wrapper.appendChild(userVideo);
+            wrapper.appendChild(label);
             call.on('stream', userVideoStream => {
-                addVideoStream(userVideo, userVideoStream);
+            addVideoStream(userVideo, userVideoStream, wrapper);
             });
         });
 
-        const addVideoStream = (video, stream) => {
+        const addVideoStream = (video, stream, wrapper) => {
             video.srcObject = stream;
             video.addEventListener('loadedmetadata', () => {
                 video.play();
             });
-            videoGrid.appendChild(video);
+            videoGrid.appendChild(wrapper);
         };
 
-        const connectNewUser = (userId, localStream) => {
-            const call = myPeer.call(userId, localStream);
-            const userVideo = document.createElement('video');
 
-            call.on('stream', userVideoStream => {
-                addVideoStream(userVideo, userVideoStream);
+        const connectNewUser = (userId, localStream, userName) => {
+            connection.invoke('GetUserNameFromClient').then(MyName => {
+                console.log(MyName);
+
+                const call = myPeer.call(userId, localStream);
+                const conn = myPeer.connect(userId);
+                conn.on('open', () => {
+                    conn.send(MyName);
+                });
+
+                const userVideo = document.createElement('video');
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('video-wrapper');
+
+                const label = document.createElement('div');
+                label.classList.add('video-label');
+                label.textContent = userName;
+
+                wrapper.appendChild(userVideo);
+                wrapper.appendChild(label);
+
+                call.on('stream', userVideoStream => {
+                    addVideoStream(userVideo, userVideoStream, wrapper);
+                });
+
+                call.on('close', () => {
+                    userVideo.remove();
+                });
+
+                Peers[userId] = call;
             });
-
-            call.on('close', () => {
-                userVideo.remove();
-            });
-
-            Peers[userId] = call;
         };
+
         
         const chatInput = document.getElementById('chatInput');
         const sendButton = document.getElementById('sendButton');

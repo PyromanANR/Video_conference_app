@@ -16,7 +16,7 @@ namespace Video_conference_app.Hubs
         {
             Users.list.Add(Context.ConnectionId, userId);
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Groups(roomId).SendAsync("user-connected", userId);
+            await Clients.Groups(roomId).SendAsync("user-connected", userId, await GetUserNameFromClient());
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
@@ -34,6 +34,17 @@ namespace Video_conference_app.Hubs
                 user = JsonConvert.DeserializeObject<User>(userJson).Name;
             }
             await Clients.Groups(roomId).SendAsync("ReceiveMessage", message, user);
+        }
+
+        public async Task<string> GetUserNameFromClient()
+        {
+            var userJson = _httpContextAccessor.HttpContext.Session.GetString("User");
+            string user = "undefined user";
+            if (userJson != null)
+            {
+                user = JsonConvert.DeserializeObject<User>(userJson).Name;
+            }
+            return await Task.FromResult(user);
         }
     }
 }
