@@ -174,38 +174,123 @@
             messagesList.appendChild(li);
         });
 
+             const fileInput = document.getElementById('fileInput');
+
+      fileInput.addEventListener('change', (event) => {
+          const files = event.target.files;
+          for (const file of files) {
+              sendFile(file);
+          }
+      });
+
+      const sendFile = async (file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              const fileData = event.target.result;
+              connection.invoke('SendFile', ROOM_ID, userId, file.name, fileData);
+          };
+          reader.readAsDataURL(file);
+          fileInput.value = '';
+      };
+
+      connection.on('ReceiveFile', (fileName, fileData, userName) => {
+          const li = document.createElement('li');
+          const downloadLink = document.createElement('a');
+          downloadLink.href = fileData;
+          downloadLink.download = fileName;
+          downloadLink.textContent = `Download: ${fileName}`;
+          li.textContent = `${userName}: `;
+          li.appendChild(downloadLink);
+          messagesList.appendChild(li);
+      });
+
+      connection.on('ScreenSharingStatusChanged', (userId, status) => {
+          isScreenSharing = status
+          if (isScreenSharing === false) {
+          screenShareContent.innerHTML = '';
+          screenShareContainer.classList.add('hidden');
+      }
+      });
 
 
+      const shareScreenButton = document.getElementById('shareScreenButton');
+      const screenShareContainer = document.querySelector('.screen-share-container');
+      const screenShareContent = document.querySelector('.screen-share-content');
 
+      let screenStream = null;
 
+      shareScreenButton.addEventListener('click', async () => {
+          try {
+              if (!screenStream) {
+                  document.getElementById('ShareScreenButtonText').textContent = 'Stop Share';
+                  screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                  connection.invoke('SetScreenSharingStatus', ROOM_ID, userId, true);
+                  Object.keys(Peers).forEach(peerId => {
+                      const call = myPeer.call(peerId, screenStream);
+                  });
 
-        const fileInput = document.getElementById('fileInput');
+                  const video = document.createElement('video');
+                  video.srcObject = screenStream;
+                  video.autoplay = true;
 
-        fileInput.addEventListener('change', (event) => {
-            const files = event.target.files;
-            for (const file of files) {
-                sendFile(file);
-            }
-        });
+                  const screenShareContent = document.querySelector('.screen-share-content');
+                  screenShareContent.appendChild(video);
 
-        const sendFile = async (file) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const fileData = event.target.result;
-                connection.invoke('SendFile', ROOM_ID, userId, file.name, fileData);            
-            };
-            reader.readAsDataURL(file);
-            fileInput.value = '';
-        };
+                  screenShareContainer.classList.remove('hidden');
+              } else {
+                  document.getElementById('ShareScreenButtonText').textContent = 'Share Screen';
+                  screenStream.getTracks().forEach(track => track.stop());
+                  screenStream = null;
+                  const screenShareContent = document.querySelector('.screen-share-content');
+                  screenShareContent.innerHTML = '';
+                  screenShareContainer.classList.add('hidden');
+                  connection.invoke('SetScreenSharingStatus', ROOM_ID, userId, false);
+              }
+          } catch (err) {
+              console.error('Error accessing screen sharing:', err);
+          }
+      });
 
-        connection.on('ReceiveFile', (fileName, fileData, userName) => {
-            const li = document.createElement('li');
-            const downloadLink = document.createElement('a');
-            downloadLink.href = fileData;
-            downloadLink.download = fileName;
-            downloadLink.textContent = `Download: ${fileName}`;
-            li.textContent = `${userName}: `;
-            li.appendChild(downloadLink);
-            messagesList.appendChild(li);
-        });
+  let mediaRecorder;
+  let recordedChunks = [];
+
+  document.getElementById('recordScreenButton').addEventListener('click', async () => {
+      if (!mediaRecorder) {
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          mediaRecorder = new MediaRecorder(screenStream);
+
+          mediaRecorder.ondataavailable = function (event) {
+              if (event.data.size > 0) {
+                  recordedChunks.push(event.data);
+              }
+          };
+
+          mediaRecorder.onstop = function () {
+              const blob = new Blob(recordedChunks, {
+                  type: 'video/webm'
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.style.display = 'none';
+              a.href = url;
+              a.download = 'screen-record.webm';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => {
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+              }, 100);
+          };
+
+          mediaRecorder.start();
+          document.getElementById('recordScreenButtonText').textContent = 'Stop Recording';
+          alert('Recording has started');
+      } else {
+          mediaRecorder.stop();
+          mediaRecorder = null;
+          recordedChunks = [];
+          document.getElementById('recordScreenButtonText').textContent = 'Record Screen';
+          alert('Recording has stopped and the video file has been downloaded');
+      }
+  });
     </script>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Newtonsoft.Json;
 using Video_conference_app.Models;
@@ -67,6 +68,19 @@ namespace Video_conference_app.Hubs
         
         
         
+        [HttpPost]
+        [RequestSizeLimit(500_000_000)]
+        public async Task SendFile(string roomId, string senderId, string fileName, string fileData)
+        {
+            var userJson = _httpContextAccessor.HttpContext.Session.GetString("User");
+            string user = "undefined user";
+            if (userJson != null)
+            {
+                user = JsonConvert.DeserializeObject<User>(userJson).Name;
+            }
+            await Clients.Groups(roomId).SendAsync("ReceiveFile", fileName, fileData, user);
+        }
+
         [HttpPost]
         [RequestSizeLimit(500_000_000)]
         public async Task SendFile(string roomId, string senderId, string fileName, string fileData)
