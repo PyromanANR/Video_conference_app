@@ -361,6 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/App_Data/Video_conference_appContext-53de6acf-bdbb-46e2-bc9f-b22cde917b20.db
-/App_Data/Video_conference_appContext-53de6acf-bdbb-46e2-bc9f-b22cde917b20.db-shm
-/App_Data/Video_conference_appContext-53de6acf-bdbb-46e2-bc9f-b22cde917b20.db-wal
+
