@@ -3,7 +3,7 @@
 namespace Video_conference_app.Controllers
 {
     public class ChatController : Controller
-    {
+    {       
 
         public IActionResult Index()
         {
