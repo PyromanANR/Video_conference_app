@@ -18,6 +18,12 @@
     </div>
     <div class="chat-input">
         <input type="text" id="chatInput" placeholder="Type your message...">
+        <input type="file" id="fileInput" style="display: none;" accept=".pdf, .doc, .docx, .txt, .png, .jpg" multiple>
+        <label for="fileInput">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
+                <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z" />
+            </svg>
+        </label>
         <button id="sendButton">Send</button>
     </div>
 </div>
@@ -244,6 +250,36 @@
         connection.on('ReceiveMessage', (message, userName) => {
             const li = document.createElement('li');
             li.textContent = `${userName}: ${message}`;
+            messagesList.appendChild(li);
+        });
+
+        const fileInput = document.getElementById('fileInput');
+
+        fileInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            for (const file of files) {
+                sendFile(file);
+            }
+        });
+
+        const sendFile = async (file) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const fileData = event.target.result;
+                connection.invoke('SendFile', ROOM_ID, userId, file.name, fileData);
+            };
+            reader.readAsDataURL(file);
+            fileInput.value = '';
+        };
+
+        connection.on('ReceiveFile', (fileName, fileData, userName) => {
+            const li = document.createElement('li');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = fileData;
+            downloadLink.download = fileName;
+            downloadLink.textContent = `Download: ${fileName}`;
+            li.textContent = `${userName}: `;
+            li.appendChild(downloadLink);
             messagesList.appendChild(li);
         });
 
