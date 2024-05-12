@@ -38,6 +38,35 @@ namespace Video_conference_app.Hubs
             await Clients.Groups(roomId).SendAsync("ReceiveMessage", message, user);
         }
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         [HttpPost]
         [RequestSizeLimit(500_000_000)]
         public async Task SendFile(string roomId, string senderId, string fileName, string fileData)
