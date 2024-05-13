@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Video_conference_app.Data;
 using Video_conference_app.Models;
 
@@ -19,20 +20,27 @@ namespace Video_conference_app.Controllers
             _context = context;
         }
 
-        // GET: Schedules
-        /*public async Task<IActionResult> Index()
-        {
-            var video_conference_appContext = _context.Schedule.Include(s => s.Organizer);
-            return View(await video_conference_appContext.ToListAsync());
-        }*/
-
-        //Index page to show all sceduled meetings 
+        //Index page to show all sceduled meetings for current user
         public IActionResult Index()
-        {
-            int userId = 1;
-            var currentTime = DateTime.Now;
-            var schedules = _context.Schedule.Where(s => s.OrganizerId == userId && s.StartTime > currentTime).ToList();
-            return View(schedules);
+        {            
+            var userData = HttpContext.Session.GetString("User");
+
+            if (!string.IsNullOrEmpty(userData))
+            {
+                var user = JsonConvert.DeserializeObject<User>(userData);
+                string name = user.Name;
+                int id = user.Id;
+
+                var currentTime = DateTime.Now;                
+                var schedules = _context.Schedule.Where(s => s.OrganizerId == id && s.StartTime > currentTime).ToList();
+
+                return View(schedules);
+            }
+            else
+            {     
+                //redirect to Sign In  page of user is not logged in
+                return RedirectToAction("SignIn", "Users"); ;
+            }
         }
 
 
@@ -54,42 +62,27 @@ namespace Video_conference_app.Controllers
 
             return View(schedule);
         }
+        
 
-        /*// GET: Schedules/Create
+        // GET: Schedules/Create        
         public IActionResult Create()
         {
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email");
-            return View();
-        }
+            var userData = HttpContext.Session.GetString("User");
 
-        // POST: Schedules/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,StartTime,OrganizerId")] Schedule schedule)
-        {
-            if (ModelState.IsValid)
+            if (!string.IsNullOrEmpty(userData))
             {
-                _context.Add(schedule);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var user = JsonConvert.DeserializeObject<User>(userData);
+                int id = user.Id;
+
+                ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", id);
+
+                return View();
             }
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", schedule.OrganizerId);
-            return View(schedule);
-        }*/
-
-
-        // GET: Schedules/Create
-        public IActionResult Create()
-        {
-            // Get the current user's id
-            int currentUserId = 1;
-
-            // Pass the current user's id to the view
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", currentUserId);
-
-            return View();
+            else
+            {
+                // Redirect to the Sign In page if the user is not logged in
+                return RedirectToAction("SignIn", "Users");
+            }
         }
 
         // POST: Schedules/Create
@@ -97,89 +90,36 @@ namespace Video_conference_app.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,StartTime")] Schedule schedule)
         {
-            // Get the current user's id
-            int currentUserId = 1; // Replace with your logic to get the current user's id
+            var userData = HttpContext.Session.GetString("User");
 
-            // Retrieve the user from the User table using the current user's id
-            User currentUser = await _context.User.FindAsync(currentUserId);
-
-            if (ModelState.IsValid)
+            if (!string.IsNullOrEmpty(userData))
             {
-                // Set the OrganizerId property of the schedule
-                schedule.OrganizerId = currentUserId;
-
-                // Assign the retrieved user to the Organizer navigation property of the schedule
+                var user = JsonConvert.DeserializeObject<User>(userData);
+                int id = user.Id;
+                schedule.OrganizerId = id;                
+                User currentUser = await _context.User.FindAsync(id);
                 schedule.Organizer = currentUser;
 
-                // Add the schedule to the context
-                _context.Add(schedule);
-
-                // Save changes to the database
+                schedule.OrganizerId = id;                
+                schedule.Organizer = currentUser;
+          
+                _context.Add(schedule);                
                 await _context.SaveChangesAsync();
 
                 // Redirect to the Index action
                 return RedirectToAction(nameof(Index));
-            }
 
-            // If model state is not valid, return the view with the provided schedule
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", currentUserId);
-            return View(schedule);
+                // If model state is not valid, return the view with the provided schedule
+                ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", id);
+                return View(schedule);
+            }
+            else
+            {
+                // Redirect to the Sign In page if the user is not logged in
+                return RedirectToAction("SignIn", "Users");
+            }
         }
 
-
-
-        // GET: Schedules/Edit/5
-        /*public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var schedule = await _context.Schedule.FindAsync(id);
-            if (schedule == null)
-            {
-                return NotFound();
-            }
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", schedule.OrganizerId);
-            return View(schedule);
-        }
-
-        // POST: Schedules/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,StartTime,OrganizerId")] Schedule schedule)
-        {
-            if (id != schedule.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(schedule);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ScheduleExists(schedule.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["OrganizerId"] = new SelectList(_context.User, "Id", "Email", schedule.OrganizerId);
-            return View(schedule);
-        }*/
 
         // GET: Schedules/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -203,6 +143,7 @@ namespace Video_conference_app.Controllers
 
             return View(schedule);
         }
+
 
         // POST: Schedules/Edit/5
         [HttpPost]
