@@ -31,8 +31,11 @@ namespace Video_conference_app.Controllers
                 string name = user.Name;
                 int id = user.Id;
 
-                var currentTime = DateTime.Now;                
-                var schedules = _context.Schedule.Where(s => s.OrganizerId == id && s.StartTime > currentTime).ToList();
+                var currentTime = DateTime.Now;                               
+                var schedules = _context.Schedule
+                            .Where(s => s.OrganizerId == id && s.StartTime > currentTime)
+                            .OrderBy(s => s.StartTime) 
+                            .ToList();
 
                 return View(schedules);
             }
