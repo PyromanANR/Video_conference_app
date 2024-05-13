@@ -83,10 +83,14 @@
             </a>
         </div>
     </div>
-
+        <style>            
+            .card:hover {
+                background-color: #fff3cd; 
+            }
+        </style>
         <div class="col-md-4">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
+            <div class="card border border-warning">
+                <div class="card-body text-dark">
                     @if (Model != null)
                     {
                         <h5 class="card-title">Most Closest Meeting:</h5>
