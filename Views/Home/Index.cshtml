@@ -83,27 +83,46 @@
             </a>
         </div>
     </div>
-        <style>            
-            .card:hover {
-                background-color: #fff3cd; 
+</div>
+
+    <style>
+    .card-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 300px; /* Обмежує максимальну ширину контейнера */
+    }
+
+    .card {
+        width: 100%; /* Робить ширину картки рівною ширині контейнера */
+    }
+
+    .card-body {
+        max-height: 150px; /* Обмежує максимальну висоту вмісту картки */
+        overflow-y: auto; /* Додає вертикальну смугу прокрутки при перевищенні висоти */
+    }
+
+    .card:hover {
+            background-color: #ffdd72;
+    }
+</style>
+
+<div class="card-container">
+    <div class="card border border-warning">
+        <div class="card-body text-dark">
+            @if (Model != null)
+            {
+                <h5 class="card-title">Most Closest Meeting:</h5>
+                <p class="card-text">Title: @Model.Title</p>
+                <p class="card-text">Start Time: @Model.StartTime.ToString("yyyy-MM-dd HH:mm")</p>
             }
-        </style>
-        <div class="col-md-4">
-            <div class="card border border-warning">
-                <div class="card-body text-dark">
-                    @if (Model != null)
-                    {
-                        <h5 class="card-title">Most Closest Meeting:</h5>
-                        <p class="card-text">Title: @Model.Title</p>
-                        <p class="card-text">Start Time: @Model.StartTime.ToString("yyyy-MM-dd HH:mm")</p>
-                    }
-                    else
-                    {
-                        <p class="card-text">No meetings scheduled.</p>
-                    }
-                </div>
-            </div>
+            else
+            {
+                <p class="card-text">No meetings scheduled.</p>
+            }
         </div>
+    </div>
 </div>
 
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
