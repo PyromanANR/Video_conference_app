@@ -85,6 +85,46 @@
     </div>
 </div>
 
+    <style>
+    .card-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 300px; 
+    }
+
+    .card {
+        width: 100%; 
+    }
+
+    .card-body {
+        max-height: 150px; 
+        overflow-y: auto; 
+    }
+
+    .card:hover {
+            background-color: #ffdd72;
+    }
+</style>
+
+<div class="card-container">
+    <div class="card border border-warning">
+        <div class="card-body text-dark">
+            @if (Model != null)
+            {
+                <h5 class="card-title">Most Closest Meeting:</h5>
+                <p class="card-text">Title: @Model.Title</p>
+                <p class="card-text">Start Time: @Model.StartTime.ToString("yyyy-MM-dd HH:mm")</p>
+            }
+            else
+            {
+                <p class="card-text">No meetings scheduled.</p>
+            }
+        </div>
+    </div>
+</div>
+
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

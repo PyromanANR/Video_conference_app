@@ -1,4 +1,11 @@
-﻿@model Video_conference_app.Models.Schedule
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+@model Video_conference_app.Models.Schedule
 
 @{
     ViewData["Title"] = "Create";
@@ -17,9 +24,9 @@
                 <input asp-for="Title" class="form-control" value="Meeting"/>
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="StartTime" class="control-label"></label>
-                <input asp-for="StartTime" class="form-control" />
+            <div class="form-group">                
+                <label asp-for="StartTime" class="control-label"></label>                
+                <input asp-for="StartTime" class="form-control" type="datetime-local" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
                 <span asp-validation-for="StartTime" class="text-danger"></span>
             </div>
             <!-- Hide the OrganizerId field -->
