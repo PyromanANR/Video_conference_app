@@ -53,28 +53,48 @@ toggleAudioButton.addEventListener('click', () => {
     toggleAudioButton.textContent = enabled ? 'Turn On Audio' : 'Turn Off Audio';
 });
 
-connection.on('user-connected', (id, userName) => {
-    if (userId === id) return;
-    const newUser = { id, name: userName };
-    connectNewUser(id, localStream, userName);
-    addUserToDropdown(newUser);
+connection.on('update-dropdown', (usersJson) => {
+    const users = JSON.parse(usersJson);
+    const dropdown = document.getElementById('recipientDropdown');
+    dropdown.innerHTML = ''; 
+    Object.entries(users).forEach(([UserId, userName]) => {
+        if (userId !== UserId) {
+            const newItem = document.createElement('a');
+            newItem.classList.add('dropdown-item');
+            newItem.href = '#';
+            newItem.textContent = userName;
+            newItem.dataset.userId = UserId;
+            newItem.addEventListener('click', () => {
+                sendMessageToUser(UserId);
+            });
+            dropdown.appendChild(newItem);
+        }
+    });
 });
 
-const addUserToDropdown = (user) => {
-    const dropdown = document.getElementById('recipientDropdown');
-    const option = document.createElement('a');
-    option.classList.add('dropdown-item');
-    option.href = '#';
-    option.textContent = user.name;
-    dropdown.appendChild(option);
-};
+connection.on('user-connected', (id, userName) => {
+    if (userId === id) return;
+    connectNewUser(id, localStream, userName);
+});
 
 connection.on('user-disconnected', id => {
     if (Peers[id]) {
         Peers[id].close();
         delete Peers[id];
+        removeUserFromDropdown(userId);
     }
 });
+
+const removeUserFromDropdown = (userId) => {
+    const dropdown = document.getElementById('recipientDropdown');
+    const items = dropdown.getElementsByClassName('dropdown-item');
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].dataset.userId === userId) {
+            items[i].remove(); 
+            break;
+        }
+    }
+};
 
 let isScreenSharing = false
 myPeer.on('call', async call => {
@@ -167,6 +187,13 @@ const sendMessage = () => {
     }
 };
 
+const sendMessageToUser = (_userId) => {
+    const message = chatInput.value;
+    if (message) {
+        connection.invoke('SendMessageToUser', ROOM_ID, userId, _userId, message);
+    }
+};
+
 chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendMessage();
@@ -179,6 +206,14 @@ connection.on('ReceiveMessage', (message, userName) => {
     const li = document.createElement('li');
     li.textContent = `${userName}: ${message}`;
     messagesList.appendChild(li);
+});
+
+connection.on('ReceivePersonalMessage', (senderId, _userId, message, userName) => {
+    if (userId === _userId || userId === senderId) {
+        const li = document.createElement('li');
+        li.textContent = `${userName} (personally): ${message}`;
+        messagesList.appendChild(li);
+    }
 });
 
 const fileInput = document.getElementById('fileInput');
