@@ -38,7 +38,7 @@ div[video-grid] > video{
   background-color: white;
   border: 1px solid #ccc;
   width: 300px;
-  height: 430px; 
+  height: 550px; 
   overflow: hidden;
   transition: transform 0.3s ease;
 }
@@ -48,7 +48,7 @@ div[video-grid] > video{
 }
 
 .chat-window {
-  height: calc(100% - 90px); 
+  height: calc(100% - 200px); 
   padding: 10px;
 }
 
@@ -62,3 +62,7 @@ div[video-grid] > video{
   margin-right: 10px;
 }
 
+#recipientDropdown {
+  max-height: 100px; 
+  overflow-y: auto; 
+}

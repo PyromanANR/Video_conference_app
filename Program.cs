@@ -11,7 +11,14 @@ builder.Services.AddDbContext<Video_conference_appContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 // Add SignalR services
-builder.Services.AddSignalR();
+builder.Services.AddSignalR
+    (
+        o =>
+        {
+            o.EnableDetailedErrors = true;
+            o.MaximumReceiveMessageSize = null;
+        }    
+    );
 builder.Services.AddHttpContextAccessor();
 
 // Add session services
